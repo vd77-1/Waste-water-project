@@ -1,0 +1,186 @@
+export type BoothStatus = "operational" | "unavailable" | "attention" | "critical";
+
+export type BoothCategory = "Academic" | "Hostel" | "Library" | "Administrative" | "Common Area";
+
+export type Booth = {
+  id: string;
+  location: string;
+  building: string;
+  floor: string;
+  category: BoothCategory;
+  status: BoothStatus;
+  waterAvailable: boolean;
+  tds: number;
+  ph: number;
+  lastVerified: string;
+  lastMaintenance: string;
+  openComplaints: number;
+  assignedMts: string;
+  distance: number; // metres, mock
+  risk: "LOW" | "MEDIUM" | "HIGH";
+  x: number; // map position %
+  y: number;
+};
+
+export const statusMeta: Record<
+  BoothStatus,
+  { label: string; short: string; dot: string; chip: string; text: string; ring: string }
+> = {
+  operational: {
+    label: "OPERATIONAL",
+    short: "Operational",
+    dot: "bg-ok",
+    chip: "bg-ok-soft text-ok",
+    text: "text-ok",
+    ring: "ring-ok/30",
+  },
+  unavailable: {
+    label: "WATER UNAVAILABLE",
+    short: "Water unavailable",
+    dot: "bg-warn",
+    chip: "bg-warn-soft text-warn-foreground",
+    text: "text-warn-foreground",
+    ring: "ring-warn/30",
+  },
+  attention: {
+    label: "ATTENTION NEEDED",
+    short: "Attention needed",
+    dot: "bg-warn",
+    chip: "bg-warn-soft text-warn-foreground",
+    text: "text-warn-foreground",
+    ring: "ring-warn/30",
+  },
+  critical: {
+    label: "NOT OPERATIONAL",
+    short: "Not operational",
+    dot: "bg-crit",
+    chip: "bg-crit-soft text-crit",
+    text: "text-crit",
+    ring: "ring-crit/30",
+  },
+};
+
+const mk = (
+  id: string,
+  location: string,
+  building: string,
+  category: BoothCategory,
+  status: BoothStatus,
+  x: number,
+  y: number,
+  extra: Partial<Booth> = {},
+): Booth => ({
+  id,
+  location,
+  building,
+  floor: extra.floor ?? "Ground Floor",
+  category,
+  status,
+  waterAvailable: status === "operational" || status === "attention",
+  tds: extra.tds ?? 120 + ((x * 7 + y * 3) % 90),
+  ph: extra.ph ?? Number((6.8 + ((x + y) % 9) / 10).toFixed(1)),
+  lastVerified: extra.lastVerified ?? "30 August 2026, 10:32 AM",
+  lastMaintenance: extra.lastMaintenance ?? "12 August 2026",
+  openComplaints: extra.openComplaints ?? (status === "operational" ? 0 : status === "critical" ? 3 : 1),
+  assignedMts: extra.assignedMts ?? "R. Prasad (MTS-14)",
+  distance: extra.distance ?? Math.round(80 + ((x * 13 + y * 29) % 900)),
+  risk: extra.risk ?? (status === "critical" ? "HIGH" : status === "attention" ? "HIGH" : "LOW"),
+  x,
+  y,
+  ...extra,
+});
+
+export const booths: Booth[] = [
+  mk("B-17", "Department of Biochemical Engineering", "School of Biochemical Engineering", "Academic", "critical", 34, 42, {
+    tds: 146,
+    ph: 7.2,
+    floor: "Ground Floor",
+    distance: 120,
+    openComplaints: 4,
+    lastMaintenance: "02 August 2026",
+    risk: "HIGH",
+  }),
+  mk("B-01", "Department of Ceramic Engineering", "Ceramic Engineering Block", "Academic", "operational", 22, 30, { distance: 340 }),
+  mk("B-04", "Department of Chemical Engineering", "Chemical Engineering Block", "Academic", "operational", 28, 55, { distance: 520 }),
+  mk("B-08", "Department of Metallurgical Engineering", "Metallurgy Block", "Academic", "attention", 18, 62, { distance: 610, risk: "HIGH" }),
+  mk("B-12", "Department of Pharmaceutical Engineering", "Pharma Block", "Academic", "operational", 40, 26, { distance: 700 }),
+  mk("D-01", "Department of Civil Engineering", "Civil Engineering Block", "Academic", "operational", 46, 60, { distance: 480 }),
+  mk("D-03", "Department of Electrical Engineering", "Electrical Block", "Academic", "unavailable", 52, 48, { distance: 390 }),
+  mk("D-05", "Department of Computer Science & Engineering", "CSE Block", "Academic", "operational", 58, 36, { distance: 260, floor: "First Floor" }),
+  mk("D-08", "Department of Mechanical Engineering", "Mechanical Block", "Academic", "operational", 62, 58, { distance: 540 }),
+  mk("D-11", "Department of Mining Engineering", "Mining Block", "Academic", "attention", 68, 66, { distance: 780 }),
+  mk("D-14", "Department of Physics", "Science Block", "Academic", "operational", 44, 18, { distance: 830, floor: "Second Floor" }),
+  mk("D-16", "Department of Mathematical Sciences", "Science Block", "Academic", "operational", 50, 14, { distance: 860 }),
+  mk("D-19", "Department of Chemistry", "Science Block", "Academic", "critical", 55, 20, { distance: 890, risk: "HIGH", openComplaints: 2 }),
+  mk("H-01", "Rajputana Bhawan", "Hostel Block A", "Hostel", "operational", 12, 20, { distance: 950 }),
+  mk("H-02", "Dhanrajgiri Bhawan", "Hostel Block B", "Hostel", "operational", 10, 34, { distance: 1020 }),
+  mk("H-04", "Morvi Bhawan", "Hostel Block C", "Hostel", "attention", 14, 48, { distance: 250, risk: "HIGH" }),
+  mk("H-06", "Vishwakarma Bhawan", "Hostel Block D", "Hostel", "operational", 8, 58, { distance: 1180 }),
+  mk("H-08", "Aryabhatta Bhawan", "Hostel Block E", "Hostel", "unavailable", 16, 72, { distance: 1240 }),
+  mk("H-10", "Limbdi Corner Hostel", "Hostel Block F", "Hostel", "operational", 24, 78, { distance: 1330 }),
+  mk("H-12", "New Girls Hostel", "Hostel Block G", "Hostel", "operational", 32, 84, { distance: 1410 }),
+  mk("H-15", "SN Bose Bhawan", "Hostel Block H", "Hostel", "critical", 20, 88, { distance: 1520, risk: "HIGH" }),
+  mk("L-01", "Central Library — Reading Hall", "Central Library", "Library", "operational", 48, 40, { distance: 300, floor: "First Floor" }),
+  mk("L-03", "Central Library — Entrance Lobby", "Central Library", "Library", "critical", 46, 44, { distance: 410, risk: "HIGH" }),
+  mk("L-05", "Departmental Library, Mining", "Mining Block", "Library", "operational", 70, 72, { distance: 1180 }),
+  mk("A-01", "Main Administrative Building", "Administrative Block", "Administrative", "operational", 60, 26, { distance: 760 }),
+  mk("A-03", "Academic Section", "Administrative Block", "Administrative", "attention", 64, 30, { distance: 790 }),
+  mk("A-05", "Director's Office Wing", "Administrative Block", "Administrative", "operational", 66, 22, { distance: 900 }),
+  mk("C-02", "Vishwanath Temple Complex", "Common Area", "Common Area", "operational", 38, 70, { distance: 640 }),
+  mk("C-04", "Students' Activity Centre", "Common Area", "Common Area", "operational", 30, 66, { distance: 560 }),
+  mk("C-06", "Swatantrata Bhawan", "Common Area", "Common Area", "unavailable", 42, 78, { distance: 880 }),
+  mk("C-08", "Sports Complex — Ground Pavilion", "Common Area", "Common Area", "operational", 74, 46, { distance: 1290 }),
+  mk("C-10", "Health Centre", "Common Area", "Common Area", "operational", 78, 34, { distance: 1350 }),
+];
+
+export const getBooth = (id: string) =>
+  booths.find((b) => b.id.toLowerCase().replace("-", "") === id.toLowerCase().replace("-", ""));
+
+export const summary = () => ({
+  total: booths.length,
+  operational: booths.filter((b) => b.status === "operational").length,
+  attention: booths.filter((b) => b.status === "attention" || b.status === "unavailable").length,
+  critical: booths.filter((b) => b.status === "critical").length,
+});
+
+export const trendData = (base: number, spread: number) =>
+  Array.from({ length: 12 }, (_, i) => ({
+    t: `${i * 2}:00`,
+    value: Number((base + Math.sin(i / 1.7) * spread + (i % 3) * spread * 0.25).toFixed(2)),
+  }));
+
+export type Task = {
+  id: string;
+  boothId: string;
+  location: string;
+  problem: string;
+  reported: string;
+  priority: "Urgent" | "High" | "Normal";
+  status: "Assigned" | "In Progress" | "Resolved";
+};
+
+export const tasks: Task[] = [
+  { id: "T-1042", boothId: "B-17", location: "Biochemical Engineering", problem: "Cooler not working — no chilling", reported: "30 Aug 2026, 09:12 AM", priority: "Urgent", status: "Assigned" },
+  { id: "T-1041", boothId: "L-03", location: "Central Library Lobby", problem: "Water not available since morning", reported: "30 Aug 2026, 08:40 AM", priority: "Urgent", status: "In Progress" },
+  { id: "T-1039", boothId: "H-04", location: "Morvi Bhawan", problem: "Leakage near drain outlet", reported: "29 Aug 2026, 06:20 PM", priority: "High", status: "Assigned" },
+  { id: "T-1036", boothId: "D-11", location: "Mining Block", problem: "Poor water taste reported by users", reported: "29 Aug 2026, 02:05 PM", priority: "Normal", status: "Assigned" },
+  { id: "T-1033", boothId: "H-15", location: "SN Bose Bhawan", problem: "Unit defunct — power fault", reported: "28 Aug 2026, 11:45 AM", priority: "Urgent", status: "In Progress" },
+  { id: "T-1028", boothId: "A-03", location: "Academic Section", problem: "Filter replacement due", reported: "27 Aug 2026, 10:10 AM", priority: "Normal", status: "Resolved" },
+  { id: "T-1025", boothId: "C-06", location: "Swatantrata Bhawan", problem: "Tap handle broken", reported: "26 Aug 2026, 04:32 PM", priority: "High", status: "Resolved" },
+];
+
+export type Complaint = {
+  id: string;
+  boothId: string;
+  category: string;
+  reported: string;
+  status: "New" | "Under Review" | "Assigned" | "Closed";
+};
+
+export const complaints: Complaint[] = [
+  { id: "C-2201", boothId: "B-17", category: "Cooler not working", reported: "30 Aug 2026, 09:12 AM", status: "New" },
+  { id: "C-2200", boothId: "L-03", category: "Water not available", reported: "30 Aug 2026, 08:40 AM", status: "Assigned" },
+  { id: "C-2198", boothId: "H-04", category: "Leakage", reported: "29 Aug 2026, 06:20 PM", status: "Under Review" },
+  { id: "C-2195", boothId: "D-19", category: "Poor water quality", reported: "29 Aug 2026, 01:02 PM", status: "Assigned" },
+  { id: "C-2190", boothId: "C-06", category: "Other", reported: "28 Aug 2026, 05:50 PM", status: "Closed" },
+];
