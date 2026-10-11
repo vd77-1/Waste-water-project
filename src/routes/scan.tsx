@@ -6,7 +6,8 @@ import { PublicLayout } from "@/components/trishna/PublicLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { findBooth } from "@/data/booths";
-import { parseBoothCode, useBooths } from "@/data/boothStore";
+import { parseBoothCode } from "@/lib/boothUtils";
+import { useBooths } from "@/services/store";
 
 export const Route = createFileRoute("/scan")({
   head: () => ({

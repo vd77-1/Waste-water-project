@@ -1,6 +1,5 @@
-import { AlertTriangle, CheckCircle2, Droplets, XCircle } from "lucide-react";
-import type { BoothStatus } from "@/data/booths";
-import { statusMeta } from "@/data/booths";
+import { AlertTriangle, CheckCircle2, Droplets, WifiOff, XCircle } from "lucide-react";
+import { statusMeta, type BoothStatus } from "@/data/types";
 import { cn } from "@/lib/utils";
 
 const icons = {
@@ -8,6 +7,7 @@ const icons = {
   attention: AlertTriangle,
   unavailable: Droplets,
   critical: XCircle,
+  offline: WifiOff,
 };
 
 export function StatusPill({
@@ -26,7 +26,11 @@ export function StatusPill({
       className={cn(
         "inline-flex items-center gap-2 rounded-full font-semibold uppercase tracking-wide",
         meta.chip,
-        size === "lg" ? "px-4 py-2 text-sm" : size === "sm" ? "px-2.5 py-1 text-[11px]" : "px-3 py-1.5 text-xs",
+        size === "lg"
+          ? "px-4 py-2 text-sm"
+          : size === "sm"
+            ? "px-2.5 py-1 text-[11px]"
+            : "px-3 py-1.5 text-xs",
         className,
       )}
     >

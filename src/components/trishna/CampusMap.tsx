@@ -1,23 +1,18 @@
 import "leaflet/dist/leaflet.css";
 import type { Map as LeafletMap, LayerGroup, Marker, CircleMarker } from "leaflet";
 import { useEffect, useRef, useState } from "react";
-import type { Booth } from "@/data/booths";
-import { CAMPUS_CENTER, statusMeta } from "@/data/booths";
+import { CAMPUS_CENTER } from "@/data/booths";
+import { statusMeta, type Booth, type BoothStatus } from "@/data/types";
 import { cn } from "@/lib/utils";
 
 type LatLng = { lat: number; lng: number };
 
-const STATUS_COLOR = {
-  operational: "#16a34a",
-  attention: "#f59e0b",
-  unavailable: "#f59e0b",
-  critical: "#dc2626",
-} as const;
+type MapBooth = Booth & { displayStatus?: BoothStatus | undefined };
 
 type Props = {
-  booths: Booth[];
+  booths: MapBooth[];
   selectedId?: string | undefined;
-  onSelect?: ((booth: Booth) => void) | undefined;
+  onSelect?: ((booth: MapBooth) => void) | undefined;
   className?: string | undefined;
   /** Enables "click the map to choose a spot" (used when adding a booth). */
   onMapClick?: ((point: LatLng) => void) | undefined;
@@ -121,7 +116,8 @@ export function CampusMap({
 
     booths.forEach((b) => {
       const active = selectedId === b.id;
-      const color = STATUS_COLOR[b.status];
+      const st = b.displayStatus ?? b.status;
+      const color = statusMeta[st].color;
       const icon = L.divIcon({
         className: "",
         iconSize: [26, 26],
@@ -130,7 +126,7 @@ export function CampusMap({
           active ? 0 : 3
         }px;border-radius:9999px;background:${color};border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.45);${
           active ? "outline:3px solid #0b3c5d;" : ""
-        }${b.status === "critical" ? "animation:pulse-crit 1.8s ease-in-out infinite;" : ""}"></span>`,
+        }${st === "critical" ? "animation:pulse-crit 1.8s ease-in-out infinite;" : ""}"></span>`,
       });
       const marker = L.marker([b.lat, b.lng], {
         icon,
@@ -139,7 +135,7 @@ export function CampusMap({
         title: `${b.id} · ${b.location}`,
         zIndexOffset: active ? 1000 : 0,
       });
-      marker.bindTooltip(`${b.id} · ${statusMeta[b.status].short}`, {
+      marker.bindTooltip(`${b.id} · ${statusMeta[st].short}`, {
         direction: "top",
         offset: [0, -10],
       });
@@ -229,13 +225,16 @@ export function CampusMap({
 
       <div className="pointer-events-none absolute bottom-6 left-3 z-[500] flex flex-wrap gap-3 rounded-xl border border-border bg-card/90 px-3 py-2 text-[11px] font-medium shadow-card backdrop-blur">
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-ok" /> Operational
+          <span className="h-2.5 w-2.5 rounded-full bg-ok" /> Normal
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-warn" /> Attention
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="h-2.5 w-2.5 rounded-full bg-crit" /> Critical
+          <span className="h-2.5 w-2.5 rounded-full bg-crit" /> Not working
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-muted-foreground" /> Offline
         </span>
       </div>
     </div>

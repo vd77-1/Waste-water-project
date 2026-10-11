@@ -19,7 +19,12 @@ function NavLinks({ className, itemClass }: { className?: string; itemClass: str
       <Link to="/scan" activeProps={{ className: "text-primary bg-accent" }} className={itemClass}>
         Scan / Enter Code
       </Link>
-      <Link to="/find" activeProps={{ className: "text-primary bg-accent" }} className={itemClass}>
+      <Link
+        to="/find"
+        search={{}}
+        activeProps={{ className: "text-primary bg-accent" }}
+        className={itemClass}
+      >
         Find a Booth
       </Link>
       <Link
@@ -31,11 +36,12 @@ function NavLinks({ className, itemClass }: { className?: string; itemClass: str
         Report an Issue
       </Link>
       <Link
-        to="/manage"
+        to="/track"
+        search={{}}
         activeProps={{ className: "text-primary bg-accent" }}
         className={itemClass}
       >
-        Add Booth
+        Track a Report
       </Link>
     </div>
   );
@@ -53,7 +59,9 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               itemClass="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             />
             <Button asChild size="sm" className="ml-2">
-              <Link to="/find">Find a Booth</Link>
+              <Link to="/find" search={{}}>
+                Find a Booth
+              </Link>
             </Button>
           </nav>
           <Sheet>

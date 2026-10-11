@@ -15,8 +15,14 @@ import { Route as ManageRouteImport } from './routes/manage'
 import { Route as MtsRouteImport } from './routes/mts'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ScanRouteImport } from './routes/scan'
+import { Route as TrackRouteImport } from './routes/track'
+import { Route as AdminBoothsRouteImport } from './routes/admin.booths'
+import { Route as AdminComplaintsRouteImport } from './routes/admin.complaints'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminMaintenanceRouteImport } from './routes/admin.maintenance'
+import { Route as AdminQrRouteImport } from './routes/admin.qr'
+import { Route as AdminRiskRouteImport } from './routes/admin.risk'
 import { Route as BoothIdRouteImport } from './routes/booth.$id'
 import { Route as AdminBoothIdRouteImport } from './routes/admin.booth.$id'
 
@@ -50,6 +56,21 @@ const ScanRoute = ScanRouteImport.update({
   path: '/scan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrackRoute = TrackRouteImport.update({
+  id: '/track',
+  path: '/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminBoothsRoute = AdminBoothsRouteImport.update({
+  id: '/admin/booths',
+  path: '/admin/booths',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminComplaintsRoute = AdminComplaintsRouteImport.update({
+  id: '/admin/complaints',
+  path: '/admin/complaints',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/admin/dashboard',
   path: '/admin/dashboard',
@@ -58,6 +79,21 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminMaintenanceRoute = AdminMaintenanceRouteImport.update({
+  id: '/admin/maintenance',
+  path: '/admin/maintenance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminQrRoute = AdminQrRouteImport.update({
+  id: '/admin/qr',
+  path: '/admin/qr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRiskRoute = AdminRiskRouteImport.update({
+  id: '/admin/risk',
+  path: '/admin/risk',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BoothIdRoute = BoothIdRouteImport.update({
@@ -78,8 +114,14 @@ export interface FileRoutesByFullPath {
   '/mts': typeof MtsRoute
   '/report': typeof ReportRoute
   '/scan': typeof ScanRoute
+  '/track': typeof TrackRoute
+  '/admin/booths': typeof AdminBoothsRoute
+  '/admin/complaints': typeof AdminComplaintsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/maintenance': typeof AdminMaintenanceRoute
+  '/admin/qr': typeof AdminQrRoute
+  '/admin/risk': typeof AdminRiskRoute
   '/booth/$id': typeof BoothIdRoute
   '/admin/booth/$id': typeof AdminBoothIdRoute
 }
@@ -90,8 +132,14 @@ export interface FileRoutesByTo {
   '/mts': typeof MtsRoute
   '/report': typeof ReportRoute
   '/scan': typeof ScanRoute
+  '/track': typeof TrackRoute
+  '/admin/booths': typeof AdminBoothsRoute
+  '/admin/complaints': typeof AdminComplaintsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/maintenance': typeof AdminMaintenanceRoute
+  '/admin/qr': typeof AdminQrRoute
+  '/admin/risk': typeof AdminRiskRoute
   '/booth/$id': typeof BoothIdRoute
   '/admin/booth/$id': typeof AdminBoothIdRoute
 }
@@ -103,8 +151,14 @@ export interface FileRoutesById {
   '/mts': typeof MtsRoute
   '/report': typeof ReportRoute
   '/scan': typeof ScanRoute
+  '/track': typeof TrackRoute
+  '/admin/booths': typeof AdminBoothsRoute
+  '/admin/complaints': typeof AdminComplaintsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/login': typeof AdminLoginRoute
+  '/admin/maintenance': typeof AdminMaintenanceRoute
+  '/admin/qr': typeof AdminQrRoute
+  '/admin/risk': typeof AdminRiskRoute
   '/booth/$id': typeof BoothIdRoute
   '/admin/booth/$id': typeof AdminBoothIdRoute
 }
@@ -117,8 +171,14 @@ export interface FileRouteTypes {
     | '/mts'
     | '/report'
     | '/scan'
+    | '/track'
+    | '/admin/booths'
+    | '/admin/complaints'
     | '/admin/dashboard'
     | '/admin/login'
+    | '/admin/maintenance'
+    | '/admin/qr'
+    | '/admin/risk'
     | '/booth/$id'
     | '/admin/booth/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -129,8 +189,14 @@ export interface FileRouteTypes {
     | '/mts'
     | '/report'
     | '/scan'
+    | '/track'
+    | '/admin/booths'
+    | '/admin/complaints'
     | '/admin/dashboard'
     | '/admin/login'
+    | '/admin/maintenance'
+    | '/admin/qr'
+    | '/admin/risk'
     | '/booth/$id'
     | '/admin/booth/$id'
   id:
@@ -141,8 +207,14 @@ export interface FileRouteTypes {
     | '/mts'
     | '/report'
     | '/scan'
+    | '/track'
+    | '/admin/booths'
+    | '/admin/complaints'
     | '/admin/dashboard'
     | '/admin/login'
+    | '/admin/maintenance'
+    | '/admin/qr'
+    | '/admin/risk'
     | '/booth/$id'
     | '/admin/booth/$id'
   fileRoutesById: FileRoutesById
@@ -154,8 +226,14 @@ export interface RootRouteChildren {
   MtsRoute: typeof MtsRoute
   ReportRoute: typeof ReportRoute
   ScanRoute: typeof ScanRoute
+  TrackRoute: typeof TrackRoute
+  AdminBoothsRoute: typeof AdminBoothsRoute
+  AdminComplaintsRoute: typeof AdminComplaintsRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  AdminMaintenanceRoute: typeof AdminMaintenanceRoute
+  AdminQrRoute: typeof AdminQrRoute
+  AdminRiskRoute: typeof AdminRiskRoute
   BoothIdRoute: typeof BoothIdRoute
   AdminBoothIdRoute: typeof AdminBoothIdRoute
 }
@@ -204,6 +282,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ScanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/track': {
+      id: '/track'
+      path: '/track'
+      fullPath: '/track'
+      preLoaderRoute: typeof TrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/booths': {
+      id: '/admin/booths'
+      path: '/admin/booths'
+      fullPath: '/admin/booths'
+      preLoaderRoute: typeof AdminBoothsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/complaints': {
+      id: '/admin/complaints'
+      path: '/admin/complaints'
+      fullPath: '/admin/complaints'
+      preLoaderRoute: typeof AdminComplaintsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/admin/dashboard'
@@ -216,6 +315,27 @@ declare module '@tanstack/react-router' {
       path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/maintenance': {
+      id: '/admin/maintenance'
+      path: '/admin/maintenance'
+      fullPath: '/admin/maintenance'
+      preLoaderRoute: typeof AdminMaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/qr': {
+      id: '/admin/qr'
+      path: '/admin/qr'
+      fullPath: '/admin/qr'
+      preLoaderRoute: typeof AdminQrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/risk': {
+      id: '/admin/risk'
+      path: '/admin/risk'
+      fullPath: '/admin/risk'
+      preLoaderRoute: typeof AdminRiskRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/booth/$id': {
@@ -242,8 +362,14 @@ const rootRouteChildren: RootRouteChildren = {
   MtsRoute: MtsRoute,
   ReportRoute: ReportRoute,
   ScanRoute: ScanRoute,
+  TrackRoute: TrackRoute,
+  AdminBoothsRoute: AdminBoothsRoute,
+  AdminComplaintsRoute: AdminComplaintsRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminLoginRoute: AdminLoginRoute,
+  AdminMaintenanceRoute: AdminMaintenanceRoute,
+  AdminQrRoute: AdminQrRoute,
+  AdminRiskRoute: AdminRiskRoute,
   BoothIdRoute: BoothIdRoute,
   AdminBoothIdRoute: AdminBoothIdRoute,
 }

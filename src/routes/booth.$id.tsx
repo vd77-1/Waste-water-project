@@ -3,100 +3,72 @@ import {
   Clock,
   Droplets,
   FlaskConical,
+  Gauge,
   Info,
   MapPin,
   Navigation,
   ScanLine,
+  Thermometer,
   TriangleAlert,
 } from "lucide-react";
+import { DataModeBanner, SourceBadge } from "@/components/trishna/DataModeBanner";
+import { QualityNote, Stat } from "@/components/trishna/Panels";
 import { PublicLayout } from "@/components/trishna/PublicLayout";
+import { SensorChart } from "@/components/trishna/SensorChart";
 import { StatusPill } from "@/components/trishna/StatusPill";
 import { Button } from "@/components/ui/button";
-import { statusMeta, type Booth } from "@/data/booths";
-import { useBooth, useMounted } from "@/data/boothStore";
+import { statusMeta, type BoothStatus } from "@/data/types";
+import { flowBaseline } from "@/domain/telemetry";
+import { PH_MAX, PH_MIN, TDS_ACCEPTABLE, phTone, tdsTone } from "@/domain/thresholds";
+import { useBoothAnalytics } from "@/hooks/useTelemetry";
+import { availability, fmtDateTime, timeAgo } from "@/lib/boothUtils";
+import { useBooth } from "@/services/store";
 
 export const Route = createFileRoute("/booth/$id")({
   head: ({ params }) => ({
     meta: [
-      { title: `Booth ${params.id} — Live Status | TRISHNA` },
+      { title: `Booth ${params.id} — Status | TRISHNA` },
       {
         name: "description",
-        content: `Live status, water availability and quality for booth ${params.id} at IIT (BHU).`,
+        content: `Status, water availability and monitored readings for booth ${params.id} at IIT (BHU).`,
       },
     ],
   }),
   component: BoothStatusPage,
 });
 
-function bannerTone(b: Booth) {
-  switch (b.status) {
-    case "operational":
-      return "bg-ok-soft border-ok/25";
-    case "critical":
-      return "bg-crit-soft border-crit/25";
-    default:
-      return "bg-warn-soft border-warn/30";
-  }
-}
+const banner: Record<BoothStatus, string> = {
+  operational: "bg-ok-soft border-ok/25",
+  critical: "bg-crit-soft border-crit/25",
+  attention: "bg-warn-soft border-warn/30",
+  unavailable: "bg-warn-soft border-warn/30",
+  offline: "bg-muted border-border",
+};
 
-function headline(b: Booth) {
-  switch (b.status) {
-    case "operational":
-      return "You can drink here";
-    case "unavailable":
-      return "No water right now";
-    case "attention":
-      return "Usable, but needs attention";
-    case "critical":
-      return "This booth is out of service";
-  }
-}
-
-function QualityStat({
-  label,
-  value,
-  note,
-  icon: Icon,
-  good,
-}: {
-  label: string;
-  value: string;
-  note: string;
-  icon: typeof Droplets;
-  good: boolean;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-surface p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {label}
-        </span>
-        <Icon className="h-4 w-4 text-aqua" />
-      </div>
-      <p className="mt-2 font-display text-2xl font-bold text-primary">{value}</p>
-      <p className={`mt-1 text-xs font-medium ${good ? "text-ok" : "text-warn-foreground"}`}>
-        {note}
-      </p>
-    </div>
-  );
-}
+const headline: Record<BoothStatus, string> = {
+  operational: "Operational",
+  attention: "Working, but attention needed",
+  unavailable: "No water right now",
+  critical: "Not working",
+  offline: "No recent data from this booth",
+};
 
 function BoothStatusPage() {
   const { id } = Route.useParams();
-  const booth = useBooth(id);
-  const mounted = useMounted();
+  const { booth, loaded } = useBooth(id);
+  const { analytics, loading, error } = useBoothAnalytics(booth);
 
   if (!booth) {
     return (
       <PublicLayout>
         <div className="mx-auto w-full max-w-xl px-4 py-20 text-center sm:px-6">
-          {mounted ? (
+          {loaded ? (
             <>
               <h1 className="font-display text-2xl font-bold text-primary">
                 Booth "{id}" not found
               </h1>
               <p className="mt-3 text-sm text-muted-foreground">
-                Check the code printed on the cooler, or scan its QR code again.
+                Check the code printed on the booth, or scan its QR code again.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Button asChild>
@@ -110,17 +82,21 @@ function BoothStatusPage() {
               </div>
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">Loading booth…</p>
+            <p className="text-sm text-muted-foreground" role="status">
+              Loading booth…
+            </p>
           )}
         </div>
       </PublicLayout>
     );
   }
 
-  return <BoothView booth={booth} />;
-}
+  const status: BoothStatus = analytics?.displayStatus ?? booth.status;
+  const avail = availability(status);
+  const latest = analytics?.latest;
+  const stale = analytics?.stale ?? false;
+  const recent = analytics ? analytics.readings.slice(-6).reverse() : [];
 
-function BoothView({ booth }: { booth: Booth }) {
   return (
     <PublicLayout>
       <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
@@ -131,7 +107,6 @@ function BoothView({ booth }: { booth: Booth }) {
           </span>
           <span>· {booth.category}</span>
         </div>
-
         <h1 className="mt-3 font-display text-2xl font-bold text-primary sm:text-3xl">
           {booth.location}
         </h1>
@@ -140,10 +115,12 @@ function BoothView({ booth }: { booth: Booth }) {
           {booth.building} · {booth.floor}
         </p>
 
-        <div className={`mt-6 rounded-2xl border p-6 shadow-card ${bannerTone(booth)}`}>
-          <StatusPill status={booth.status} size="lg" />
+        <DataModeBanner className="mt-5" />
+
+        <div className={`mt-5 rounded-2xl border p-6 shadow-card ${banner[status]}`}>
+          <StatusPill status={status} size="lg" />
           <p className="mt-4 font-display text-2xl font-bold text-primary sm:text-3xl">
-            {headline(booth)}
+            {headline[status]}
           </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl bg-card/80 p-4">
@@ -151,74 +128,173 @@ function BoothView({ booth }: { booth: Booth }) {
                 Water availability
               </p>
               <p
-                className={`mt-1 text-lg font-bold ${booth.waterAvailable ? "text-ok" : "text-crit"}`}
+                className={`mt-1 text-lg font-bold ${
+                  avail === "available"
+                    ? "text-ok"
+                    : avail === "unavailable"
+                      ? "text-crit"
+                      : "text-muted-foreground"
+                }`}
               >
-                {booth.waterAvailable ? "Available" : "Not available"}
+                {avail === "available"
+                  ? "Water available"
+                  : avail === "unavailable"
+                    ? "Water unavailable"
+                    : "Unknown (no recent data)"}
               </p>
             </div>
             <div className="rounded-xl bg-card/80 p-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Last verified
+                Last updated
               </p>
-              <p className="mt-1 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+              <p className="mt-1 flex flex-wrap items-center gap-1.5 text-sm font-semibold text-foreground">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                {booth.lastVerified}
+                {latest
+                  ? `${fmtDateTime(latest.ts)} (${timeAgo(latest.ts)})`
+                  : loading
+                    ? "Loading…"
+                    : "No readings yet"}
+                <SourceBadge source={latest?.source} />
               </p>
             </div>
           </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Status is set by campus maintenance after reports are reviewed (
+            {statusMeta[status].short}).
+          </p>
         </div>
 
         <section className="card-elevated mt-6 p-6">
-          <h2 className="text-base font-semibold">Water quality</h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <QualityStat
-              label="TDS"
-              value={`${booth.tds} ppm`}
-              note={booth.tds < 300 ? "Within safe drinking range" : "Above preferred range"}
-              icon={Droplets}
-              good={booth.tds < 300}
-            />
-            <QualityStat
-              label="pH"
-              value={`${booth.ph}`}
-              note={
-                booth.ph >= 6.5 && booth.ph <= 8.5 ? "Neutral and safe" : "Outside preferred range"
-              }
-              icon={FlaskConical}
-              good={booth.ph >= 6.5 && booth.ph <= 8.5}
-            />
-          </div>
-          <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            Data automatically updated every 24 hours.
-          </p>
+          <h2 className="text-base font-semibold">Monitored readings</h2>
+          {error && (
+            <p
+              role="alert"
+              className="mt-2 rounded-lg bg-warn-soft px-3 py-2 text-xs text-warn-foreground"
+            >
+              {error}
+            </p>
+          )}
+          {loading && !analytics ? (
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4" aria-busy>
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="h-24 animate-pulse rounded-xl bg-surface" />
+              ))}
+            </div>
+          ) : latest ? (
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <Stat
+                label="TDS"
+                value={`${latest.tdsPpm} ppm`}
+                tone={tdsTone(latest.tdsPpm) === "ok" ? "ok" : "warn"}
+                sub={`reference ≤ ${TDS_ACCEPTABLE}`}
+                icon={<Droplets className="h-4 w-4 text-aqua" />}
+              />
+              <Stat
+                label="pH"
+                value={latest.ph.toFixed(2)}
+                tone={phTone(latest.ph) === "ok" ? "ok" : "warn"}
+                sub={`reference ${PH_MIN}–${PH_MAX}`}
+                icon={<FlaskConical className="h-4 w-4 text-aqua" />}
+              />
+              <Stat
+                label="Temperature"
+                value={`${latest.temperatureC.toFixed(1)} °C`}
+                sub="water at outlet"
+                icon={<Thermometer className="h-4 w-4 text-aqua" />}
+              />
+              <Stat
+                label="Flow"
+                value={`${latest.flowLpm.toFixed(1)} L/min`}
+                sub="at last reading"
+                icon={<Gauge className="h-4 w-4 text-aqua" />}
+              />
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-muted-foreground">
+              No sensor readings are available for this booth yet.
+            </p>
+          )}
+          {analytics && (
+            <div className="mt-4">
+              <QualityNote q={analytics.quality} />
+              {stale && (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  The latest reading is older than 6 hours, so quality is not assessed.
+                </p>
+              )}
+            </div>
+          )}
         </section>
 
+        {analytics && analytics.readings.length > 0 && (
+          <>
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <SensorChart
+                title="TDS"
+                readings={analytics.readings}
+                field="tdsPpm"
+                unit="ppm"
+                color="var(--aqua)"
+                refs={[{ y: TDS_ACCEPTABLE, label: `${TDS_ACCEPTABLE} ppm ref` }]}
+                compact
+              />
+              <SensorChart
+                title="Flow rate"
+                readings={analytics.readings}
+                field="flowLpm"
+                unit="L/min"
+                color="var(--primary)"
+                baseline={flowBaseline(analytics.readings)}
+                compact
+              />
+            </div>
+            <section className="card-elevated mt-4 overflow-x-auto p-5">
+              <h3 className="text-sm font-semibold">Recent readings</h3>
+              <table className="mt-3 w-full min-w-[420px] text-left text-xs">
+                <thead className="text-muted-foreground">
+                  <tr>
+                    <th className="pb-2 font-semibold">Time</th>
+                    <th className="pb-2 font-semibold">TDS (ppm)</th>
+                    <th className="pb-2 font-semibold">pH</th>
+                    <th className="pb-2 font-semibold">Temp (°C)</th>
+                    <th className="pb-2 font-semibold">Flow (L/min)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {recent.map((r) => (
+                    <tr key={r.ts}>
+                      <td className="py-1.5">{fmtDateTime(r.ts)}</td>
+                      <td>{r.tdsPpm}</td>
+                      <td>{r.ph.toFixed(2)}</td>
+                      <td>{r.temperatureC.toFixed(1)}</td>
+                      <td>{r.flowLpm.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          </>
+        )}
+
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <Button
-            asChild
-            size="lg"
-            variant={booth.status === "operational" ? "outline" : "default"}
-          >
+          <Button asChild size="lg" variant={status === "operational" ? "outline" : "default"}>
             <Link to="/report" search={{ booth: booth.id }}>
               <TriangleAlert className="mr-2 h-4 w-4" />
-              Report a Problem
+              Report an Issue
             </Link>
           </Button>
-          <Button
-            asChild
-            size="lg"
-            variant={booth.status === "operational" ? "default" : "outline"}
-          >
-            <Link to="/find">
+          <Button asChild size="lg" variant={status === "operational" ? "default" : "outline"}>
+            <Link to="/find" search={{ from: booth.id, ok: true }}>
               <Navigation className="mr-2 h-4 w-4" />
-              Find Nearest Booth
+              Find Nearby Operational Booths
             </Link>
           </Button>
         </div>
 
-        <p className="mt-8 text-center text-xs text-muted-foreground">
-          Status is derived from verified reports and periodic checks. Prototype data shown.
+        <p className="mt-8 flex items-start justify-center gap-2 text-center text-xs text-muted-foreground">
+          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          Readings are monitoring indicators for maintenance. They are not a certificate of water
+          safety.
         </p>
       </div>
     </PublicLayout>

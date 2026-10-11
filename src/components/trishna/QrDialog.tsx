@@ -1,5 +1,4 @@
 import { Download, Printer } from "lucide-react";
-import QRCode from "qrcode";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,32 +8,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { Booth } from "@/data/booths";
+import type { Booth } from "@/data/types";
+import { boothUrl, printQrLabels, qrDataUrl } from "@/lib/qr";
 
 /** Shows (and lets you download / print) the QR code for a booth. */
 export function QrDialog({ booth, onClose }: { booth: Booth | null; onClose: () => void }) {
   const [dataUrl, setDataUrl] = useState("");
-  const url = booth ? `${window.location.origin}/booth/${encodeURIComponent(booth.id)}` : "";
+  const url = booth ? boothUrl(booth.id) : "";
 
   useEffect(() => {
     if (!booth) {
       setDataUrl("");
       return;
     }
-    QRCode.toDataURL(url, { width: 560, margin: 2, errorCorrectionLevel: "M" }).then(setDataUrl);
-  }, [booth, url]);
-
-  function print() {
-    const w = window.open("", "_blank", "width=480,height=640");
-    if (!w || !booth) return;
-    w.document.write(
-      `<title>${booth.id}</title><body style="font-family:sans-serif;text-align:center;padding:24px">` +
-        `<h2 style="margin:0">TRISHNA · Booth ${booth.id}</h2><p>${booth.location}</p>` +
-        `<img src="${dataUrl}" style="width:320px;height:320px"/><p style="font-size:12px">Scan to check water status</p>` +
-        `<script>window.onload=()=>window.print()</script></body>`,
-    );
-    w.document.close();
-  }
+    qrDataUrl(booth.id).then(setDataUrl);
+  }, [booth]);
 
   return (
     <Dialog open={!!booth} onOpenChange={(o) => !o && onClose()}>
@@ -42,7 +30,7 @@ export function QrDialog({ booth, onClose }: { booth: Booth | null; onClose: () 
         <DialogHeader>
           <DialogTitle>Booth {booth?.id} · QR code</DialogTitle>
           <DialogDescription>
-            Stick this on the booth. Scanning it on the Scan page opens its live status.
+            Stick this on the booth. Scanning it opens the booth's public status page.
           </DialogDescription>
         </DialogHeader>
         {dataUrl ? (
@@ -57,7 +45,7 @@ export function QrDialog({ booth, onClose }: { booth: Booth | null; onClose: () 
               <Download className="mr-2 h-4 w-4" /> Download
             </a>
           </Button>
-          <Button className="flex-1" onClick={print}>
+          <Button className="flex-1" onClick={() => booth && printQrLabels([booth])}>
             <Printer className="mr-2 h-4 w-4" /> Print
           </Button>
         </div>
