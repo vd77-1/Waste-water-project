@@ -6,14 +6,18 @@ import { CampusMap } from "@/components/trishna/CampusMap";
 import { StatusDot } from "@/components/trishna/StatusPill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { booths, statusMeta, summary } from "@/data/booths";
+import { statusMeta, summary } from "@/data/booths";
+import { useBooths } from "@/data/boothStore";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/dashboard")({
   head: () => ({
     meta: [
       { title: "Admin Dashboard — TRISHNA Control Centre" },
-      { name: "description", content: "Campus-wide monitoring map of all TRISHNA drinking-water booths." },
+      {
+        name: "description",
+        content: "Campus-wide monitoring map of all TRISHNA drinking-water booths.",
+      },
       { name: "robots", content: "noindex" },
       { property: "og:title", content: "Admin Dashboard — TRISHNA" },
       { property: "og:description", content: "Live campus water booth monitoring." },
@@ -28,7 +32,8 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<string | undefined>();
   const [query, setQuery] = useState("");
-  const s = summary();
+  const booths = useBooths();
+  const s = summary(booths);
 
   const list = useMemo(
     () =>
@@ -40,14 +45,32 @@ function AdminDashboard() {
             b.location.toLowerCase().includes(query.toLowerCase()),
         )
         .sort((a, b) => order[a.status] - order[b.status] || a.id.localeCompare(b.id)),
-    [query],
+    [booths, query],
   );
 
   const cards = [
     { label: "Total Booths", value: s.total, icon: Waves, tone: "text-primary", bg: "bg-accent" },
-    { label: "Operational", value: s.operational, icon: Activity, tone: "text-ok", bg: "bg-ok-soft" },
-    { label: "Attention Needed", value: s.attention, icon: TriangleAlert, tone: "text-warn-foreground", bg: "bg-warn-soft" },
-    { label: "Critical", value: s.critical, icon: AlertOctagon, tone: "text-crit", bg: "bg-crit-soft" },
+    {
+      label: "Operational",
+      value: s.operational,
+      icon: Activity,
+      tone: "text-ok",
+      bg: "bg-ok-soft",
+    },
+    {
+      label: "Attention Needed",
+      value: s.attention,
+      icon: TriangleAlert,
+      tone: "text-warn-foreground",
+      bg: "bg-warn-soft",
+    },
+    {
+      label: "Critical",
+      value: s.critical,
+      icon: AlertOctagon,
+      tone: "text-crit",
+      bg: "bg-crit-soft",
+    },
   ];
 
   return (
@@ -63,7 +86,9 @@ function AdminDashboard() {
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {c.label}
                 </p>
-                <p className="font-display text-2xl font-bold leading-tight text-primary">{c.value}</p>
+                <p className="font-display text-2xl font-bold leading-tight text-primary">
+                  {c.value}
+                </p>
               </div>
             </div>
           ))}
@@ -114,7 +139,12 @@ function AdminDashboard() {
                     <div className="min-w-0 flex-1">
                       <p className="font-display text-sm font-bold text-primary">{b.id}</p>
                       <p className="truncate text-xs text-muted-foreground">{b.location}</p>
-                      <p className={cn("mt-0.5 text-[10px] font-bold uppercase tracking-wider", statusMeta[b.status].text)}>
+                      <p
+                        className={cn(
+                          "mt-0.5 text-[10px] font-bold uppercase tracking-wider",
+                          statusMeta[b.status].text,
+                        )}
+                      >
                         {statusMeta[b.status].label}
                       </p>
                     </div>
@@ -126,6 +156,9 @@ function AdminDashboard() {
             <div className="border-t border-border p-3">
               <Button asChild variant="outline" size="sm" className="w-full">
                 <Link to="/mts">Open maintenance queue</Link>
+              </Button>
+              <Button asChild size="sm" className="mt-2 w-full">
+                <Link to="/manage">Add / manage booths</Link>
               </Button>
             </div>
           </aside>

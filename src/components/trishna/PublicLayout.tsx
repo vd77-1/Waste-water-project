@@ -8,17 +8,34 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 function NavLinks({ className, itemClass }: { className?: string; itemClass: string }) {
   return (
     <div className={className}>
-      <Link to="/" activeOptions={{ exact: true }} activeProps={{ className: "text-primary bg-accent" }} className={itemClass}>
+      <Link
+        to="/"
+        activeOptions={{ exact: true }}
+        activeProps={{ className: "text-primary bg-accent" }}
+        className={itemClass}
+      >
         Home
       </Link>
-      <Link to="/booth/$id" params={{ id: "B-17" }} activeProps={{ className: "text-primary bg-accent" }} className={itemClass}>
-        Booth Status
+      <Link to="/scan" activeProps={{ className: "text-primary bg-accent" }} className={itemClass}>
+        Scan / Enter Code
       </Link>
       <Link to="/find" activeProps={{ className: "text-primary bg-accent" }} className={itemClass}>
         Find a Booth
       </Link>
-      <Link to="/report" search={{}} activeProps={{ className: "text-primary bg-accent" }} className={itemClass}>
+      <Link
+        to="/report"
+        search={{}}
+        activeProps={{ className: "text-primary bg-accent" }}
+        className={itemClass}
+      >
         Report an Issue
+      </Link>
+      <Link
+        to="/manage"
+        activeProps={{ className: "text-primary bg-accent" }}
+        className={itemClass}
+      >
+        Add Booth
       </Link>
     </div>
   );
@@ -62,8 +79,8 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           <div>
             <Logo />
             <p className="mt-3 max-w-xs text-sm text-muted-foreground">
-              Tracking &amp; Reporting Infrastructure for Safe Hydration Network Access — a smart campus
-              drinking-water monitoring system for IIT (BHU), Varanasi.
+              Tracking &amp; Reporting Infrastructure for Safe Hydration Network Access — a smart
+              campus drinking-water monitoring system for IIT (BHU), Varanasi.
             </p>
           </div>
           <div>

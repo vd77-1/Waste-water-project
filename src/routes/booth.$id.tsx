@@ -1,31 +1,30 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { Clock, Droplets, FlaskConical, Info, MapPin, Navigation, TriangleAlert } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  Clock,
+  Droplets,
+  FlaskConical,
+  Info,
+  MapPin,
+  Navigation,
+  ScanLine,
+  TriangleAlert,
+} from "lucide-react";
 import { PublicLayout } from "@/components/trishna/PublicLayout";
 import { StatusPill } from "@/components/trishna/StatusPill";
 import { Button } from "@/components/ui/button";
-import { getBooth, statusMeta, type Booth } from "@/data/booths";
+import { statusMeta, type Booth } from "@/data/booths";
+import { useBooth, useMounted } from "@/data/boothStore";
 
 export const Route = createFileRoute("/booth/$id")({
-  loader: ({ params }) => {
-    const booth = getBooth(params.id);
-    if (!booth) throw notFound();
-    return { booth };
-  },
-  head: ({ loaderData }) => {
-    if (!loaderData) {
-      return { meta: [{ title: "Booth unavailable — TRISHNA" }, { name: "robots", content: "noindex" }] };
-    }
-    const title = `Booth ${loaderData.booth.id} — ${statusMeta[loaderData.booth.status].short} | TRISHNA`;
-    const description = `Live status, water availability and quality for booth ${loaderData.booth.id} at ${loaderData.booth.location}, IIT (BHU).`;
-    return {
-      meta: [
-        { title },
-        { name: "description", content: description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-      ],
-    };
-  },
+  head: ({ params }) => ({
+    meta: [
+      { title: `Booth ${params.id} — Live Status | TRISHNA` },
+      {
+        name: "description",
+        content: `Live status, water availability and quality for booth ${params.id} at IIT (BHU).`,
+      },
+    ],
+  }),
   component: BoothStatusPage,
 });
 
@@ -69,29 +68,73 @@ function QualityStat({
   return (
     <div className="rounded-xl border border-border bg-surface p-4">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
         <Icon className="h-4 w-4 text-aqua" />
       </div>
       <p className="mt-2 font-display text-2xl font-bold text-primary">{value}</p>
-      <p className={`mt-1 text-xs font-medium ${good ? "text-ok" : "text-warn-foreground"}`}>{note}</p>
+      <p className={`mt-1 text-xs font-medium ${good ? "text-ok" : "text-warn-foreground"}`}>
+        {note}
+      </p>
     </div>
   );
 }
 
 function BoothStatusPage() {
-  const { booth } = Route.useLoaderData();
-  const meta = statusMeta[booth.status];
+  const { id } = Route.useParams();
+  const booth = useBooth(id);
+  const mounted = useMounted();
 
+  if (!booth) {
+    return (
+      <PublicLayout>
+        <div className="mx-auto w-full max-w-xl px-4 py-20 text-center sm:px-6">
+          {mounted ? (
+            <>
+              <h1 className="font-display text-2xl font-bold text-primary">
+                Booth "{id}" not found
+              </h1>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Check the code printed on the cooler, or scan its QR code again.
+              </p>
+              <div className="mt-8 flex flex-wrap justify-center gap-3">
+                <Button asChild>
+                  <Link to="/scan">
+                    <ScanLine className="mr-2 h-4 w-4" /> Scan / enter code
+                  </Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/find">Find a booth</Link>
+                </Button>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">Loading booth…</p>
+          )}
+        </div>
+      </PublicLayout>
+    );
+  }
+
+  return <BoothView booth={booth} />;
+}
+
+function BoothView({ booth }: { booth: Booth }) {
   return (
     <PublicLayout>
       <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <span>Booth</span>
-          <span className="rounded-md bg-accent px-2 py-0.5 text-accent-foreground">{booth.id}</span>
+          <span className="rounded-md bg-accent px-2 py-0.5 text-accent-foreground">
+            {booth.id}
+          </span>
           <span>· {booth.category}</span>
         </div>
 
-        <h1 className="mt-3 font-display text-2xl font-bold text-primary sm:text-3xl">{booth.location}</h1>
+        <h1 className="mt-3 font-display text-2xl font-bold text-primary sm:text-3xl">
+          {booth.location}
+        </h1>
         <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
           <MapPin className="h-4 w-4" />
           {booth.building} · {booth.floor}
@@ -99,13 +142,17 @@ function BoothStatusPage() {
 
         <div className={`mt-6 rounded-2xl border p-6 shadow-card ${bannerTone(booth)}`}>
           <StatusPill status={booth.status} size="lg" />
-          <p className="mt-4 font-display text-2xl font-bold text-primary sm:text-3xl">{headline(booth)}</p>
+          <p className="mt-4 font-display text-2xl font-bold text-primary sm:text-3xl">
+            {headline(booth)}
+          </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl bg-card/80 p-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Water availability
               </p>
-              <p className={`mt-1 text-lg font-bold ${booth.waterAvailable ? "text-ok" : "text-crit"}`}>
+              <p
+                className={`mt-1 text-lg font-bold ${booth.waterAvailable ? "text-ok" : "text-crit"}`}
+              >
                 {booth.waterAvailable ? "Available" : "Not available"}
               </p>
             </div>
@@ -134,7 +181,9 @@ function BoothStatusPage() {
             <QualityStat
               label="pH"
               value={`${booth.ph}`}
-              note={booth.ph >= 6.5 && booth.ph <= 8.5 ? "Neutral and safe" : "Outside preferred range"}
+              note={
+                booth.ph >= 6.5 && booth.ph <= 8.5 ? "Neutral and safe" : "Outside preferred range"
+              }
               icon={FlaskConical}
               good={booth.ph >= 6.5 && booth.ph <= 8.5}
             />
@@ -146,13 +195,21 @@ function BoothStatusPage() {
         </section>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <Button asChild size="lg" variant={booth.status === "operational" ? "outline" : "default"}>
+          <Button
+            asChild
+            size="lg"
+            variant={booth.status === "operational" ? "outline" : "default"}
+          >
             <Link to="/report" search={{ booth: booth.id }}>
               <TriangleAlert className="mr-2 h-4 w-4" />
               Report a Problem
             </Link>
           </Button>
-          <Button asChild size="lg" variant={booth.status === "operational" ? "default" : "outline"}>
+          <Button
+            asChild
+            size="lg"
+            variant={booth.status === "operational" ? "default" : "outline"}
+          >
             <Link to="/find">
               <Navigation className="mr-2 h-4 w-4" />
               Find Nearest Booth

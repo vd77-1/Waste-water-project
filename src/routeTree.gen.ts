@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FindRouteImport } from './routes/find'
+import { Route as ManageRouteImport } from './routes/manage'
 import { Route as MtsRouteImport } from './routes/mts'
 import { Route as ReportRouteImport } from './routes/report'
+import { Route as ScanRouteImport } from './routes/scan'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as BoothIdRouteImport } from './routes/booth.$id'
@@ -28,6 +30,11 @@ const FindRoute = FindRouteImport.update({
   path: '/find',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManageRoute = ManageRouteImport.update({
+  id: '/manage',
+  path: '/manage',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MtsRoute = MtsRouteImport.update({
   id: '/mts',
   path: '/mts',
@@ -36,6 +43,11 @@ const MtsRoute = MtsRouteImport.update({
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanRoute = ScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
@@ -62,8 +74,10 @@ const AdminBoothIdRoute = AdminBoothIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/find': typeof FindRoute
+  '/manage': typeof ManageRoute
   '/mts': typeof MtsRoute
   '/report': typeof ReportRoute
+  '/scan': typeof ScanRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/login': typeof AdminLoginRoute
   '/booth/$id': typeof BoothIdRoute
@@ -72,8 +86,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/find': typeof FindRoute
+  '/manage': typeof ManageRoute
   '/mts': typeof MtsRoute
   '/report': typeof ReportRoute
+  '/scan': typeof ScanRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/login': typeof AdminLoginRoute
   '/booth/$id': typeof BoothIdRoute
@@ -83,8 +99,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/find': typeof FindRoute
+  '/manage': typeof ManageRoute
   '/mts': typeof MtsRoute
   '/report': typeof ReportRoute
+  '/scan': typeof ScanRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/login': typeof AdminLoginRoute
   '/booth/$id': typeof BoothIdRoute
@@ -95,8 +113,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/find'
+    | '/manage'
     | '/mts'
     | '/report'
+    | '/scan'
     | '/admin/dashboard'
     | '/admin/login'
     | '/booth/$id'
@@ -105,8 +125,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/find'
+    | '/manage'
     | '/mts'
     | '/report'
+    | '/scan'
     | '/admin/dashboard'
     | '/admin/login'
     | '/booth/$id'
@@ -115,8 +137,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/find'
+    | '/manage'
     | '/mts'
     | '/report'
+    | '/scan'
     | '/admin/dashboard'
     | '/admin/login'
     | '/booth/$id'
@@ -126,8 +150,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FindRoute: typeof FindRoute
+  ManageRoute: typeof ManageRoute
   MtsRoute: typeof MtsRoute
   ReportRoute: typeof ReportRoute
+  ScanRoute: typeof ScanRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminLoginRoute: typeof AdminLoginRoute
   BoothIdRoute: typeof BoothIdRoute
@@ -150,6 +176,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FindRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/manage': {
+      id: '/manage'
+      path: '/manage'
+      fullPath: '/manage'
+      preLoaderRoute: typeof ManageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mts': {
       id: '/mts'
       path: '/mts'
@@ -162,6 +195,13 @@ declare module '@tanstack/react-router' {
       path: '/report'
       fullPath: '/report'
       preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan': {
+      id: '/scan'
+      path: '/scan'
+      fullPath: '/scan'
+      preLoaderRoute: typeof ScanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/dashboard': {
@@ -198,8 +238,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FindRoute: FindRoute,
+  ManageRoute: ManageRoute,
   MtsRoute: MtsRoute,
   ReportRoute: ReportRoute,
+  ScanRoute: ScanRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminLoginRoute: AdminLoginRoute,
   BoothIdRoute: BoothIdRoute,

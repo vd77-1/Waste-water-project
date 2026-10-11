@@ -1,46 +1,62 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, BrainCircuit, ClipboardList, Droplets, FlaskConical, MapPin, UserCog, Wrench } from "lucide-react";
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  ArrowLeft,
+  BrainCircuit,
+  ClipboardList,
+  Droplets,
+  FlaskConical,
+  MapPin,
+  UserCog,
+  Wrench,
+} from "lucide-react";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { AdminShell } from "@/components/trishna/AdminShell";
 import { StatusPill } from "@/components/trishna/StatusPill";
 import { Button } from "@/components/ui/button";
-import { complaints, getBooth, trendData } from "@/data/booths";
+import { complaints, trendData, type Booth } from "@/data/booths";
+import { useBooth, useMounted } from "@/data/boothStore";
 
 export const Route = createFileRoute("/admin/booth/$id")({
-  loader: ({ params }) => {
-    const booth = getBooth(params.id);
-    if (!booth) throw notFound();
-    return { booth };
-  },
-  head: ({ loaderData }) => {
-    if (!loaderData) {
-      return { meta: [{ title: "Booth unavailable — TRISHNA" }, { name: "robots", content: "noindex" }] };
-    }
-    const title = `Booth ${loaderData.booth.id} monitoring — TRISHNA`;
-    return {
-      meta: [
-        { title },
-        { name: "description", content: `Sensor history, complaints and maintenance record for booth ${loaderData.booth.id}.` },
-        { name: "robots", content: "noindex" },
-        { property: "og:title", content: title },
-        { property: "og:description", content: "Booth monitoring detail." },
-      ],
-    };
-  },
-  component: BoothMonitoring,
+  head: ({ params }) => ({
+    meta: [
+      { title: `Booth ${params.id} monitoring — TRISHNA` },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: BoothMonitoringPage,
 });
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
       <p className="mt-1 font-display text-xl font-bold text-primary">{value}</p>
       {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
     </div>
   );
 }
 
-function Chart({ title, data, color, unit }: { title: string; data: { t: string; value: number }[]; color: string; unit: string }) {
+function Chart({
+  title,
+  data,
+  color,
+  unit,
+}: {
+  title: string;
+  data: { t: string; value: number }[];
+  color: string;
+  unit: string;
+}) {
   return (
     <div className="card-elevated p-5">
       <h3 className="text-sm font-semibold">{title}</h3>
@@ -50,7 +66,11 @@ function Chart({ title, data, color, unit }: { title: string; data: { t: string;
           <LineChart data={data} margin={{ left: -20, right: 8, top: 8 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis dataKey="t" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-            <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" domain={["auto", "auto"]} />
+            <YAxis
+              tick={{ fontSize: 11 }}
+              stroke="var(--muted-foreground)"
+              domain={["auto", "auto"]}
+            />
             <Tooltip
               contentStyle={{
                 borderRadius: 12,
@@ -67,8 +87,30 @@ function Chart({ title, data, color, unit }: { title: string; data: { t: string;
   );
 }
 
-function BoothMonitoring() {
-  const { booth } = Route.useLoaderData();
+function BoothMonitoringPage() {
+  const { id } = Route.useParams();
+  const booth = useBooth(id);
+  const mounted = useMounted();
+  if (!booth) {
+    return (
+      <AdminShell active="Booths">
+        <div className="mx-auto max-w-xl p-12 text-center">
+          <h1 className="font-display text-2xl font-bold text-primary">
+            {mounted ? `Booth "${id}" not found` : "Loading booth…"}
+          </h1>
+          {mounted && (
+            <Button asChild className="mt-6">
+              <Link to="/admin/dashboard">Back to dashboard</Link>
+            </Button>
+          )}
+        </div>
+      </AdminShell>
+    );
+  }
+  return <BoothMonitoring booth={booth} />;
+}
+
+function BoothMonitoring({ booth }: { booth: Booth }) {
   const boothComplaints = complaints.filter((c) => c.boothId === booth.id);
 
   return (
@@ -104,17 +146,35 @@ function BoothMonitoring() {
         <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Stat label="Water availability" value={booth.waterAvailable ? "Available" : "Not available"} />
+              <Stat
+                label="Water availability"
+                value={booth.waterAvailable ? "Available" : "Not available"}
+              />
               <Stat label="TDS" value={`${booth.tds} ppm`} sub="Safe range < 300" />
               <Stat label="pH" value={`${booth.ph}`} sub="Safe range 6.5 – 8.5" />
               <Stat label="Last sensor update" value="10:32 AM" sub="30 August 2026" />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Chart title="TDS trend" data={trendData(booth.tds, 12)} color="var(--aqua)" unit="ppm" />
-              <Chart title="pH trend" data={trendData(booth.ph, 0.25)} color="var(--teal)" unit="pH" />
+              <Chart
+                title="TDS trend"
+                data={trendData(booth.tds, 12)}
+                color="var(--aqua)"
+                unit="ppm"
+              />
+              <Chart
+                title="pH trend"
+                data={trendData(booth.ph, 0.25)}
+                color="var(--teal)"
+                unit="pH"
+              />
             </div>
-            <Chart title="Cooling performance (sensor)" data={trendData(14, 2.5)} color="var(--primary)" unit="°C outlet temperature" />
+            <Chart
+              title="Cooling performance (sensor)"
+              data={trendData(14, 2.5)}
+              color="var(--primary)"
+              unit="°C outlet temperature"
+            />
           </div>
 
           <div className="space-y-4">
@@ -131,7 +191,11 @@ function BoothMonitoring() {
                   </p>
                   <p
                     className={`font-display text-2xl font-bold ${
-                      booth.risk === "HIGH" ? "text-crit" : booth.risk === "MEDIUM" ? "text-warn-foreground" : "text-ok"
+                      booth.risk === "HIGH"
+                        ? "text-crit"
+                        : booth.risk === "MEDIUM"
+                          ? "text-warn-foreground"
+                          : "text-ok"
                     }`}
                   >
                     {booth.risk}
@@ -163,7 +227,10 @@ function BoothMonitoring() {
                   ["Assigned MTS", booth.assignedMts],
                   ["Category", booth.category],
                 ].map(([k, v]) => (
-                  <div key={k} className="flex justify-between gap-4 border-b border-border pb-2 last:border-0">
+                  <div
+                    key={k}
+                    className="flex justify-between gap-4 border-b border-border pb-2 last:border-0"
+                  >
                     <dt className="text-muted-foreground">{k}</dt>
                     <dd className="text-right font-medium">{v}</dd>
                   </div>
@@ -187,7 +254,9 @@ function BoothMonitoring() {
                   ))}
                 </ul>
               ) : (
-                <p className="mt-3 text-sm text-muted-foreground">No complaints logged for this booth.</p>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  No complaints logged for this booth.
+                </p>
               )}
             </section>
 

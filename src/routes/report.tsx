@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { booths, getBooth } from "@/data/booths";
+import { findBooth } from "@/data/booths";
+import { fileReport, useBooths } from "@/data/boothStore";
 
 export const Route = createFileRoute("/report")({
   validateSearch: (search: Record<string, unknown>): { booth?: string } =>
@@ -20,7 +21,10 @@ export const Route = createFileRoute("/report")({
           "Report a faulty drinking-water booth on the IIT (BHU) campus. No login required — takes under a minute.",
       },
       { property: "og:title", content: "Report a Water Booth Issue — TRISHNA" },
-      { property: "og:description", content: "Tell campus maintenance about a faulty water booth." },
+      {
+        property: "og:description",
+        content: "Tell campus maintenance about a faulty water booth.",
+      },
     ],
   }),
   component: ReportPage,
@@ -39,7 +43,9 @@ function ReportPage() {
   const [boothId, setBoothId] = useState(boothParam ?? "");
   const [category, setCategory] = useState<string>(categories[0]!);
   const [submitted, setSubmitted] = useState(false);
-  const booth = getBooth(boothId || "");
+  const booths = useBooths();
+  const booth = findBooth(booths, boothId || "");
+  const [ref, setRef] = useState("");
 
   if (submitted) {
     return (
@@ -50,8 +56,9 @@ function ReportPage() {
           </span>
           <h1 className="mt-6 font-display text-2xl font-bold text-primary">Report submitted</h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Reference <strong className="text-foreground">C-2202</strong> · Thank you for helping keep campus
-            water safe. Reports are reviewed before they are reflected in the official booth status.
+            Reference <strong className="text-foreground">{ref}</strong> · Thank you for helping
+            keep campus water safe. Reports are reviewed before they are reflected in the official
+            booth status.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild variant="outline">
@@ -110,6 +117,8 @@ function ReportPage() {
           className="card-elevated mt-6 space-y-6 p-6"
           onSubmit={(e) => {
             e.preventDefault();
+            if (booth) setRef(fileReport(booth.id, category));
+            else setRef("C-2202");
             setSubmitted(true);
           }}
         >
@@ -120,7 +129,9 @@ function ReportPage() {
                 <label
                   key={c}
                   className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium transition-colors ${
-                    category === c ? "border-primary bg-accent text-accent-foreground" : "border-border hover:bg-surface"
+                    category === c
+                      ? "border-primary bg-accent text-accent-foreground"
+                      : "border-border hover:bg-surface"
                   }`}
                 >
                   <input

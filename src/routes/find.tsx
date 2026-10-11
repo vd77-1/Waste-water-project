@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Crosshair, MapPin, Search } from "lucide-react";
+import { Crosshair, Loader2, MapPin, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { CampusMap } from "@/components/trishna/CampusMap";
 import { PublicLayout } from "@/components/trishna/PublicLayout";
 import { StatusPill } from "@/components/trishna/StatusPill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { booths } from "@/data/booths";
+import { CAMPUS_CENTER } from "@/data/booths";
+import { distanceMetres, formatDistance, useBooths } from "@/data/boothStore";
 
 export const Route = createFileRoute("/find")({
   head: () => ({
@@ -33,12 +34,42 @@ function FindPage() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
   const [selected, setSelected] = useState<string | undefined>();
+  const booths = useBooths();
+  const [me, setMe] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locError, setLocError] = useState("");
+  const origin = me ?? CAMPUS_CENTER;
+
+  function locate() {
+    if (!("geolocation" in navigator)) {
+      setLocError("Location isn't available in this browser.");
+      return;
+    }
+    setLocating(true);
+    setLocError("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setMe({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocating(false);
+      },
+      () => {
+        setLocError("Couldn't get your location. Allow location access and try again.");
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
 
   const results = useMemo(() => {
     return booths
+      .map((b) => ({ ...b, distance: distanceMetres(origin.lat, origin.lng, b.lat, b.lng) }))
       .filter((b) => {
         const q = query.trim().toLowerCase();
-        const matches = !q || b.id.toLowerCase().includes(q) || b.location.toLowerCase().includes(q) || b.building.toLowerCase().includes(q);
+        const matches =
+          !q ||
+          b.id.toLowerCase().includes(q) ||
+          b.location.toLowerCase().includes(q) ||
+          b.building.toLowerCase().includes(q);
         const cat =
           filter === "All" ||
           (filter === "Operational only" && b.status === "operational") ||
@@ -46,14 +77,18 @@ function FindPage() {
         return matches && cat;
       })
       .sort((a, b) => a.distance - b.distance);
-  }, [query, filter]);
+  }, [booths, query, filter, origin.lat, origin.lng]);
 
   return (
     <PublicLayout>
       <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
-        <h1 className="font-display text-3xl font-bold text-primary">Find a water booth near you</h1>
+        <h1 className="font-display text-3xl font-bold text-primary">
+          Find a water booth near you
+        </h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Distances are shown from your approximate location on campus. Prototype uses mock location data.
+          {me
+            ? "Distances are measured from your current location."
+            : 'Distances are measured from the campus centre. Tap "Use my location" for distances from where you are.'}
         </p>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -67,10 +102,23 @@ function FindPage() {
               aria-label="Search booths"
             />
           </div>
-          <Button variant="outline" size="lg" className="shrink-0">
-            <Crosshair className="mr-2 h-4 w-4" /> Use my location
+          <Button
+            variant="outline"
+            size="lg"
+            className="shrink-0"
+            onClick={locate}
+            disabled={locating}
+          >
+            {locating ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Crosshair className="mr-2 h-4 w-4" />
+            )}
+            Use my location
           </Button>
         </div>
+
+        {locError && <p className="mt-2 text-xs text-crit">{locError}</p>}
 
         <div className="mt-4 flex flex-wrap gap-2">
           {filters.map((f) => (
@@ -104,7 +152,9 @@ function FindPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h2 className="font-display text-base font-bold text-primary">Booth {b.id}</h2>
+                      <h2 className="font-display text-base font-bold text-primary">
+                        Booth {b.id}
+                      </h2>
                       <span className="rounded-md bg-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent-foreground">
                         {b.category}
                       </span>
@@ -112,7 +162,8 @@ function FindPage() {
                     <p className="truncate text-sm text-muted-foreground">{b.location}</p>
                     <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-foreground">
                       <MapPin className="h-3.5 w-3.5 text-aqua" />
-                      {b.distance} m away · {b.waterAvailable ? "Water available" : "No water"}
+                      {formatDistance(b.distance)} away ·{" "}
+                      {b.waterAvailable ? "Water available" : "No water"}
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -134,7 +185,12 @@ function FindPage() {
           </div>
 
           <div className="order-1 h-[320px] lg:order-2 lg:sticky lg:top-24 lg:h-[560px]">
-            <CampusMap booths={results} selectedId={selected} onSelect={(b) => setSelected(b.id)} />
+            <CampusMap
+              booths={results}
+              selectedId={selected}
+              onSelect={(b) => setSelected(b.id)}
+              userLocation={me}
+            />
           </div>
         </div>
       </div>

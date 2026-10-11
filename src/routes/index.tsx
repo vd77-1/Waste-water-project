@@ -59,8 +59,16 @@ const features = [
 const steps = [
   { icon: QrCode, title: "QR code on booth", text: "Every cooler carries a unique TRISHNA code." },
   { icon: ScanLine, title: "Scan", text: "Open the booth page instantly on your phone." },
-  { icon: Droplets, title: "View current status", text: "Availability, quality and last verification." },
-  { icon: TriangleAlert, title: "Report if needed", text: "One tap sends the issue to campus maintenance." },
+  {
+    icon: Droplets,
+    title: "View current status",
+    text: "Availability, quality and last verification.",
+  },
+  {
+    icon: TriangleAlert,
+    title: "Report if needed",
+    text: "One tap sends the issue to campus maintenance.",
+  },
 ];
 
 function Landing() {
@@ -79,18 +87,19 @@ function Landing() {
               Smart Water. Smarter Campus.
             </p>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground">
-              TRISHNA lets students, staff and visitors check the operational status and water-quality
-              information of drinking-water booths across the campus — from academic departments and hostels
-              to the Central Library. Scan the code on any cooler and know before you drink.
+              TRISHNA lets students, staff and visitors check the operational status and
+              water-quality information of drinking-water booths across the campus — from academic
+              departments and hostels to the Central Library. Scan the code on any cooler and know
+              before you drink.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg">
-                <Link to="/find">Find a Water Booth</Link>
+                <Link to="/scan">
+                  <ScanLine className="mr-2 h-4 w-4" /> Scan QR / Enter Code
+                </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link to="/booth/$id" params={{ id: "B-17" }}>
-                  Check Booth Status
-                </Link>
+                <Link to="/find">Find a Water Booth</Link>
               </Button>
             </div>
             <p className="mt-5 text-xs uppercase tracking-wider text-muted-foreground">
@@ -155,20 +164,26 @@ function Landing() {
               Connected sensors and predictive maintenance
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Future stages of TRISHNA will attach low-cost IoT sensors to each booth to stream TDS, pH, flow
-              and cooling-performance data. Predictive analytics will then flag units that are likely to fail
-              before students notice — turning campus water maintenance from reactive to proactive.
+              Future stages of TRISHNA will attach low-cost IoT sensors to each booth to stream TDS,
+              pH, flow and cooling-performance data. Predictive analytics will then flag units that
+              are likely to fail before students notice — turning campus water maintenance from
+              reactive to proactive.
             </p>
           </div>
           <div className="grid gap-3 self-center">
-            {["Continuous sensor telemetry", "Automated quality alerts", "Predicted failure risk scoring"].map(
-              (t) => (
-                <div key={t} className="flex items-center gap-3 rounded-xl bg-surface px-4 py-3 text-sm font-medium">
-                  <span className="h-2 w-2 rounded-full bg-teal" />
-                  {t}
-                </div>
-              ),
-            )}
+            {[
+              "Continuous sensor telemetry",
+              "Automated quality alerts",
+              "Predicted failure risk scoring",
+            ].map((t) => (
+              <div
+                key={t}
+                className="flex items-center gap-3 rounded-xl bg-surface px-4 py-3 text-sm font-medium"
+              >
+                <span className="h-2 w-2 rounded-full bg-teal" />
+                {t}
+              </div>
+            ))}
           </div>
         </div>
       </section>
